@@ -1,7 +1,7 @@
 #  A Multi-Level Attribution Approach for Explainable Sentiment Analysis
 
 ### Build the Docker image
-```docker build -t xai-sentiment .```
+```docker build -t xai-container .```
 
 ### Run the analysis
-```docker run --rm -v ${PWD}/output:/app/output xai-sentiment```
+```docker run --rm -p 8000:8000 -v ${PWD}\output:/app/output xai-container```

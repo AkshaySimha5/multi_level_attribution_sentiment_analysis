@@ -23,5 +23,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY explainers/ ./explainers/
 COPY utils/ ./utils/
 COPY run_demo.py .
+COPY xai_app.py .
+COPY xai_pipeline.py .
 
-CMD ["python", "run_demo.py"]
+CMD ["uvicorn", "xai_app:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8000
