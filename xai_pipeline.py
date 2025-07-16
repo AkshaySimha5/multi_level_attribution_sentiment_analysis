@@ -1,13 +1,15 @@
 import logging
+import os
 from utils.model import SentimentModel
 from explainers.integrated_gradients import IntegratedGradientsAnalyzer
 from explainers.layer_integrated_gradients import LayerIntegratedGradientsAnalyzer
 from explainers.layer_conductance import LayerConductanceAnalyzer
 from explainers.neuron_conductance import NeuronConductanceAnalyzer
+from explainers.kernel_shap import KernelShapAnalyzer
 
 logger = logging.getLogger(__name__)
 
-def run_xai_analysis(text, target_label):
+def run_xai_analysis(text, target_label, neuron_idx=50):
     logger.info("Initializing model and analyzers...")
     model_handler = SentimentModel()
     model = model_handler.get_model()
@@ -81,24 +83,22 @@ def run_xai_analysis(text, target_label):
 
     try:
         # Neuron Conductance
-        logger.info("Running Neuron Conductance...")
+        logger.info(f"Running Neuron Conductance for neuron {neuron_idx}...")
         nc = NeuronConductanceAnalyzer(model, tokenizer, label_names, device)
         nc_result = nc.analyze(
             text=text,
             target_label=target_label,
+            neuron_idx=neuron_idx,
             save_viz=True,
             save_dir="output",
             base_name="nc"
         )
         results["infidelity_scores"]["nc"] = nc_result.get("infidelity_score")
-        
-        # Handle visualization paths safely
         viz_paths = nc_result.get("visualization_paths", {})
         results["visualizations"]["nc_bar"] = viz_paths.get("bar")
         results["visualizations"]["nc_activation"] = viz_paths.get("activation_comparison")
         results["visualizations"]["nc_heatmap"] = viz_paths.get("heatmap")
         results["visualizations"]["nc_html"] = viz_paths.get("html")
-        
     except Exception as e:
         logger.error(f"Error in Neuron Conductance: {e}")
         results["infidelity_scores"]["nc"] = None
@@ -106,5 +106,23 @@ def run_xai_analysis(text, target_label):
         results["visualizations"]["nc_activation"] = None
         results["visualizations"]["nc_heatmap"] = None
         results["visualizations"]["nc_html"] = None
+
+    try:
+        logger.info("Running Kernel SHAP...")
+        ks = KernelShapAnalyzer(model, tokenizer, label_names, device)
+        ks_result = ks.analyze(
+            text=text,
+            save_viz=True,
+            viz_path="output/ks_visualization"
+        )
+        results["infidelity_scores"]["ks"] = ks_result.get("infidelity_score")
+        viz_paths = ks_result.get("visualization_paths", {})
+        results["visualizations"]["ks"] = viz_paths.get("bar")
+        results["visualizations"]["ks_html"] = viz_paths.get("html")
+    except Exception as e:
+        logger.error(f"Error in Kernel SHAP: {e}")
+        results["infidelity_scores"]["ks"] = None
+        results["visualizations"]["ks"] = None
+        results["visualizations"]["ks_html"] = None
 
     return results

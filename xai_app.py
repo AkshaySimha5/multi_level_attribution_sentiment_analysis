@@ -1,5 +1,3 @@
-# xai_app.py
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 from xai_pipeline import run_xai_analysis
@@ -14,9 +12,10 @@ class InputData(BaseModel):
     text: str
     target_label: int  # 0 = Negative, 1 = Positive
 
+
 @app.post("/analyze")
 async def analyze(data: InputData):
-    logger.info(f"Received input: '{data.text}' | Target label: {data.target_label}")
+    logger.info(f"Received input: '{data.text}' | Target label: {data.target_label} ")
     result = run_xai_analysis(data.text, data.target_label)
 
     return {
